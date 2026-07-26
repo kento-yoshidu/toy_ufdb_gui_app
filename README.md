@@ -1,5 +1,7 @@
 # Tauri + React + Typescript
 
+<img src="src-tauri/icons/icon.svg" width="96" alt="toy_ufdb_gui_app icon" />
+
 This template should help get you started developing with Tauri, React and Typescript in Vite.
 
 ## Recommended IDE Setup

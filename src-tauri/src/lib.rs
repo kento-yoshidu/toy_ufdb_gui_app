@@ -17,6 +17,12 @@ fn make_set(key: String, state: tauri::State<Mutex<toy_ufdb::Ufdb>>) -> bool {
 }
 
 #[tauri::command]
+fn unite(key_a: String, key_b: String, state: tauri::State<Mutex<toy_ufdb::Ufdb>>) -> bool {
+    let mut ufdb = state.lock().unwrap();
+    ufdb.unite(&key_a, &key_b)
+}
+
+#[tauri::command]
 fn groups(state: tauri::State<Mutex<toy_ufdb::Ufdb>>) -> Vec<Vec<String>> {
     let mut ufdb = state.lock().unwrap();
 
@@ -40,7 +46,12 @@ pub fn run() {
     tauri::Builder::default()
         .manage(Mutex::new(toy_ufdb::Ufdb::new()))
         // .plugin(tauri_plugin_opener::init())
-        .invoke_handler(tauri::generate_handler![greet, health, make_set, groups])
+        .invoke_handler(tauri::generate_handler![
+            greet,
+            health,
+            make_set,
+            unite,
+            groups])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
