@@ -32,7 +32,7 @@ export default function SidePanel({
       <section className="panel">
         <h2 className="panel__title">キーを追加</h2>
         <form
-          className="row"
+          className={styles.row}
           onSubmit={(e) => {
             e.preventDefault();
             insert();
@@ -48,7 +48,7 @@ export default function SidePanel({
       </section>
 
       <section className="panel">
-        <div className="details__content">
+        <div className={styles.detailsContent}>
           <input
             value={keyA}
             onChange={(e) => setKeyA(e.currentTarget.value)}

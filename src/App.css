@@ -51,12 +51,14 @@
   padding: 20px;
 }
 
+
 .panel__title {
   font-size: 0.95em;
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.08em;
   margin-bottom: 14px;
+  white-space: nowrap;
 }
 
 .groups {
@@ -92,6 +94,7 @@ button {
   background-color: var(--surface);
   transition: border-color 0.2s, background-color 0.2s;
   outline: none;
+  white-space: nowrap;
 }
 
 input:focus {
