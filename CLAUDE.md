@@ -4,11 +4,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## プロジェクト概要
 
-`toy_ufdb_gui_app`（このリポジトリ、ディレクトリ名は`tauri-scratch`）: `toy_ufdb`（オンメモリUnion-Find DB、別リポジトリ）をGUIから操作するためのTauri + React + TypeScriptアプリ。Tauri自体の学習も兼ねている。
+`toy_ufdb_gui_app`（このリポジトリ、ディレクトリ名は`tauri-scratch`）: `ufodb_v0`（オンメモリUnion-Find DB、別リポジトリ）をGUIから操作するためのTauri + React + TypeScriptアプリ。Tauri自体の学習も兼ねている。
 
-- `toy_ufdb`とは別プロセスにしない。`src-tauri/Cargo.toml`で`toy_ufdb`をpath依存（`../../`）として追加し、TauriのRustバックエンドから`toy_ufdb::Ufdb`を直接呼び出す
-- `toy_ufdb`本体の実装（コア機能・公開API）はこのリポジトリでは行わない。GUI側で必要になった公開APIが`toy_ufdb`に無い場合は、`toy_ufdb`側リポジトリで追加してもらう
-- 永続化はしない。`toy_ufdb`がv0（オンメモリのみ）である間は、プロセスを閉じればデータが消える前提でよい
+- `ufodb_v0`とは別プロセスにしない。`src-tauri/Cargo.toml`で`ufodb_v0`をpath依存（`../../`）として追加し、TauriのRustバックエンドから`ufodb_v0::Ufdb`を直接呼び出す
+- `ufodb_v0`本体の実装（コア機能・公開API）はこのリポジトリでは行わない。GUI側で必要になった公開APIが`ufodb_v0`に無い場合は、`ufodb_v0`側リポジトリで追加してもらう
+- 永続化はしない。`ufodb_v0`がv0（オンメモリのみ）である間は、プロセスを閉じればデータが消える前提でよい
 
 実装計画・進捗のフェーズ分けは`docs/ROADMAP.md`を参照。
 
@@ -23,14 +23,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## 構成・アーキテクチャ
 
 - `src/App.tsx` — フロントエンド本体。`@tauri-apps/api/core`の`invoke()`でRust側のTauriコマンドを呼ぶ
-- `src-tauri/src/lib.rs` — Tauriコマンド（`#[tauri::command]`）の実装本体。`tauri::State<Mutex<toy_ufdb::Ufdb>>`をアプリ全体で1つ`.manage()`し、各コマンドがロックして`Ufdb`を操作する
+- `src-tauri/src/lib.rs` — Tauriコマンド（`#[tauri::command]`）の実装本体。`tauri::State<Mutex<ufodb_v0::Ufdb>>`をアプリ全体で1つ`.manage()`し、各コマンドがロックして`Ufdb`を操作する
 - `src-tauri/src/main.rs` — エントリポイント。`tauri_scratch_lib::run()`を呼ぶだけ
 - 新しいTauriコマンドを追加する際は、関数に`#[tauri::command]`を付けるだけでなく`generate_handler![...]`（`lib.rs`の`run()`内）への登録が必要（登録漏れは既知の詰まりどころ）
-- `groups`コマンドは代表元のusizeを返さずグループ（キー配列）のみを返す設計。これは`toy_ufdb`本体のFIND非公開方針に合わせたもの
+- `groups`コマンドは代表元のusizeを返さずグループ（キー配列）のみを返す設計。これは`ufodb_v0`本体のFIND非公開方針に合わせたもの
 
 ## 関連リポジトリ
 
-- `toy_ufdb`本体（オンメモリUnion-Find DB本体、CLI/REPL）はこのリポジトリの親ディレクトリ（`../../`）にあり、path依存で参照している。コア実装やCLI仕様の変更はそちら側の作業
+- `ufodb_v0`本体（オンメモリUnion-Find DB本体、CLI/REPL）はこのリポジトリの親ディレクトリ（`../../`）にあり、path依存で参照している。コア実装やCLI仕様の変更はそちら側の作業
 
 ## 作業の進め方
 

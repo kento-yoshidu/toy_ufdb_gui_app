@@ -1,27 +1,27 @@
 # toy_ufdb_gui_app ロードマップ
 
-`toy_ufdb`(オンメモリUnion-Find DB、別リポジトリ)をCargo依存として直接embedするTauriアプリ。GUIからUFQL相当の操作を行えるようにする。Tauri自体の学習も兼ねているため、まずは単一プロセス・単一DBの範囲で進める。
+`ufodb_v0`(オンメモリUnion-Find DB、別リポジトリ)をCargo依存として直接embedするTauriアプリ。GUIからUFQL相当の操作を行えるようにする。Tauri自体の学習も兼ねているため、まずは単一プロセス・単一DBの範囲で進める。
 
 ## 前提・スコープ
 
-- `toy_ufdb`とは別プロセスにしない。TauriのRustバックエンド内で`toy_ufdb::Ufdb`(将来的には`toy_ufdb::db::Db`)を直接呼び出す。CLIの`cargo run`とデータを共有する必要はない(詳細は`toy_ufdb`側`docs/ROADMAP.md`の「GUI(Tauri、別リポジトリ)との連携メモ」を参照)
-- `toy_ufdb`本体の実装はこのリポジトリでは行わない。GUI側で必要になった公開APIが`toy_ufdb`に無い場合は、そちらのリポジトリ側で追加してもらう(Phase 4参照)
-- 永続化はしない。`toy_ufdb`がv0(オンメモリのみ)である間は、このGUIもプロセスを閉じればデータが消える前提でよい
+- `ufodb_v0`とは別プロセスにしない。TauriのRustバックエンド内で`ufodb_v0::Ufdb`(将来的には`ufodb_v0::db::Db`)を直接呼び出す。CLIの`cargo run`とデータを共有する必要はない(詳細は`ufodb_v0`側`docs/ROADMAP.md`の「GUI(Tauri、別リポジトリ)との連携メモ」を参照)
+- `ufodb_v0`本体の実装はこのリポジトリでは行わない。GUI側で必要になった公開APIが`ufodb_v0`に無い場合は、そちらのリポジトリ側で追加してもらう(Phase 4参照)
+- 永続化はしない。`ufodb_v0`がv0(オンメモリのみ)である間は、このGUIもプロセスを閉じればデータが消える前提でよい
 
 ## Phase 0: プロジェクト初期化
 - [x] `npm create tauri-app`でReact + TypeScript + Vite構成のTauriプロジェクトを作成
 - [x] 独立したgitリポジトリとして管理し、`toy_ufdb_gui_app`にリモートを設定
-- [x] `toy_ufdb`をCargo依存として`src-tauri/Cargo.toml`にpath指定で追加(`{ path = "../../" }`)
+- [x] `ufodb_v0`をCargo依存として`src-tauri/Cargo.toml`にpath指定で追加(`{ path = "../../" }`)
 
 ## Phase 1: 疎通確認
-- [x] 引数なし・状態なしの最小コマンド(`health`)を実装し、`toy_ufdb::Ufdb::new()`を呼んだ結果がフロントまで返ることを確認
+- [x] 引数なし・状態なしの最小コマンド(`health`)を実装し、`ufodb_v0::Ufdb::new()`を呼んだ結果がフロントまで返ることを確認
 - [x] `generate_handler![...]`への登録漏れで`invoke`が失敗するケースを経験（コマンドは実装するだけでなく登録が必要）
 
 ## Phase 2: 単一DBの基本操作をGUI化
-現時点では`tauri::State<Mutex<toy_ufdb::Ufdb>>`をアプリ全体で1つ`.manage()`し、各コマンドがロックして操作する構成（`Db`層はPhase 3で導入）。
+現時点では`tauri::State<Mutex<ufodb_v0::Ufdb>>`をアプリ全体で1つ`.manage()`し、各コマンドがロックして操作する構成（`Db`層はPhase 3で導入）。
 
 - [x] `make_set`(INSERT相当): キー入力フォーム→ボタンで登録。登録後に`groups`を再取得して画面を更新
-- [x] `groups`(GROUPS相当): 起動時(`useEffect`)に取得して一覧表示。「森」として、代表元のusizeは返さずグループの配列のみ返す（`toy_ufdb`本体のFIND非公開方針に合わせた設計）
+- [x] `groups`(GROUPS相当): 起動時(`useEffect`)に取得して一覧表示。「森」として、代表元のusizeは返さずグループの配列のみ返す（`ufodb_v0`本体のFIND非公開方針に合わせた設計）
 - [ ] `unite`(MERGE相当): 2つのキーを指定して統合するフォーム
 - [ ] `same`(SAME相当): 2つのキーが同じグループか判定して表示
 - [ ] `size`(SIZE相当): 1つのキーが属するグループのサイズを表示。存在しないキーの場合の表示（`None`）も考慮
@@ -30,22 +30,22 @@
 - 設計判断ポイント（実装しながら決める）: 各操作のたびに`groups`を呼び直して全体を再取得する今のやり方は、キー数が増えると無駄が大きくなる可能性がある。差分更新にするか、しばらくはシンプルさ優先で全件再取得のままにするかは、実際にもたつきを感じてから検討する
 
 ## Phase 3: 複数DB対応（`Db`層への切り替え）
-`toy_ufdb`本体はPhase 5で`Ufdb`を`Db`（`HashMap<String, Ufdb>` + `current_db`）でラップする2層構成にしている。GUI側もこれに合わせて`CREATEDB`/`USE`相当の操作を追加する。
+`ufodb_v0`本体はPhase 5で`Ufdb`を`Db`（`HashMap<String, Ufdb>` + `current_db`）でラップする2層構成にしている。GUI側もこれに合わせて`CREATEDB`/`USE`相当の操作を追加する。
 
-- [ ] 管理する状態を`Mutex<toy_ufdb::Ufdb>`から`Mutex<toy_ufdb::db::Db>`に切り替える。各コマンドは`db.current()`経由で`Ufdb`を触る形にRust側を書き換える（既存の`make_set`/`groups`などのコマンド実装もこの型変更に追従が必要）
+- [ ] 管理する状態を`Mutex<ufodb_v0::Ufdb>`から`Mutex<ufodb_v0::db::Db>`に切り替える。各コマンドは`db.current()`経由で`Ufdb`を触る形にRust側を書き換える（既存の`make_set`/`groups`などのコマンド実装もこの型変更に追従が必要）
 - [ ] `create_db`(CREATEDB相当): DB名を指定して作成、かつそのDBに切り替え
 - [ ] `use_db`(USE相当): 既存DB名に切り替え。存在しない場合の挙動（CLI版はy/n確認）をGUIでどう表現するか検討
 - [ ] 現在選択中のDB名を画面のどこかに常時表示する（複数DBを行き来できるようになるため、「今どこを見ているか」が分からなくなるのを防ぐ）
 - 設計判断ポイント: DB切り替え時、画面の`groups`表示は自動的に切り替え後のDBの内容に更新されるべき（`use_db`/`create_db`呼び出し直後に`groups`を再取得する、という規約をPhase 2の各操作と揃える）
 
-## Phase 4: グラフ可視化（toy_ufdb ROADMAP Phase 11相当、GUI側の責務）
-`toy_ufdb`本体のROADMAP.mdでは「動的な更新・編集・インタラクティブな表示はTauriアプリ側の責務」と明記されている。ここがその実装にあたる。
+## Phase 4: グラフ可視化（ufodb_v0 ROADMAP Phase 11相当、GUI側の責務）
+`ufodb_v0`本体のROADMAP.mdでは「動的な更新・編集・インタラクティブな表示はTauriアプリ側の責務」と明記されている。ここがその実装にあたる。
 
-- [ ] **前提となるブロッカー**: 現状の`toy_ufdb::Ufdb`は内部の`graph`（実際にMERGEされた辺の一覧）を外部に公開するメソッドを持たない。可視化には「どのキーとどのキーが辺で繋がっているか」のデータが要るため、`toy_ufdb`本体に`pub fn edges(&self) -> ...`のような公開APIを追加してもらう必要がある（このリポジトリでは実装しない。`toy_ufdb`側での対応待ち）
-- [ ] 辺データが取得できるようになったら、フロント側でグラフを描画する（DOM/SVG/canvasのどれを使うかは実装時に決める。toy_ufdb側の静的HTML出力（Phase 11）とは異なり、こちらは操作するたびにインタラクティブに再描画できるのが狙い）
+- [ ] **前提となるブロッカー**: 現状の`ufodb_v0::Ufdb`は内部の`graph`（実際にMERGEされた辺の一覧）を外部に公開するメソッドを持たない。可視化には「どのキーとどのキーが辺で繋がっているか」のデータが要るため、`ufodb_v0`本体に`pub fn edges(&self) -> ...`のような公開APIを追加してもらう必要がある（このリポジトリでは実装しない。`ufodb_v0`側での対応待ち）
+- [ ] 辺データが取得できるようになったら、フロント側でグラフを描画する（DOM/SVG/canvasのどれを使うかは実装時に決める。ufodb_v0側の静的HTML出力（Phase 11）とは異なり、こちらは操作するたびにインタラクティブに再描画できるのが狙い）
 - [ ] ノードをクリックしたら、そのキーを起点に`same`/`size`などを呼べるようにする、といったインタラクション（詳細は実装時に検討）
-- [ ] 大規模グループの扱い（`toy_ufdb`側ROADMAP Phase 11と同様、閾値を超えたグループはレイアウト計算を諦めて簡易表示にする）をどこまでこちらでも踏襲するかは、実際に大きいデータで試してから決める
+- [ ] 大規模グループの扱い（`ufodb_v0`側ROADMAP Phase 11と同様、閾値を超えたグループはレイアウト計算を諦めて簡易表示にする）をどこまでこちらでも踏襲するかは、実際に大きいデータで試してから決める
 
 ## 検討事項（未定）
-- CLIプロセスと生きたデータを共有したくなった場合の話（TCPサーバー化）は`toy_ufdb`側ROADMAP.mdの「検討事項: TCPサーバー化」を参照。現時点では着手予定なし
-- `toy_ufdb`がv1（永続化対応）に進んだ場合、このGUIから永続化されたDBをどう開く／保存するかは、v1リポジトリが立ち上がってから考える
+- CLIプロセスと生きたデータを共有したくなった場合の話（TCPサーバー化）は`ufodb_v0`側ROADMAP.mdの「検討事項: TCPサーバー化」を参照。現時点では着手予定なし
+- `ufodb_v0`がv1（永続化対応）に進んだ場合、このGUIから永続化されたDBをどう開く／保存するかは、v1リポジトリが立ち上がってから考える
